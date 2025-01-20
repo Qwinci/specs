@@ -1,0 +1,170 @@
+addrmap msm_tlmm {
+	name = "Qualcomm msm tlmm";
+	desc = "Register description of a TLMM
+
+	Note: this doesn't detail ipq8064 specific scm registers.
+	Note: the number of pin groups is chip-specific.";
+
+	addrmap PIN_GROUP {
+		name = "Pin group";
+		desc = "Register description of a pin group
+
+		The exact register and bit locations depend on the model,
+		this example is for sc7280 (sometimes referred to as yupik in dt).";
+
+		default regwidth = 32;
+
+		reg {
+			name = "Control Register";
+
+			field {
+				desc = "Output Enable";
+				sw = rw; hw = r;
+			} OE[0:0];
+
+			field {
+				desc = "MUX select
+
+				Exact size depends on the maximum number of functions
+				(it's the count of bits required to represent the maximum
+				function).
+				";
+				sw = rw; hw = r;
+			} MUX[2:5];
+
+			field {
+				desc = "EGPIO Present";
+				sw = r; hw = rw;
+			} EGPIO_PRESENT[11:11];
+
+			field {
+				desc = "EGPIO Enable";
+				sw = rw; hw = r;
+			} EGPIO_ENABLE[12:12];
+
+		} CTL @ 0x0;
+
+		reg {
+			name = "I/O Register";
+
+			field {
+				desc = "Input Line";
+				sw = rw; hw = rw;
+			} IN[0:0];
+
+			field {
+				desc = "Output Line";
+				sw = rw; hw = r;
+			} OUT[1:1];
+
+			enum DriveEncoding {
+				_2mA = 3'b000;
+				_4mA = 3'b001;
+				_6mA = 3'b010;
+				_8mA = 3'b011;
+				_10mA = 3'b100;
+				_12mA = 3'b101;
+				_14mA = 3'b110;
+				_16mA = 3'b111;
+			};
+
+			field {
+				encode = DriveEncoding;
+				desc = "Drive Strength
+
+				Indicates the used drive strength for the pin.
+
+				value = (mA / 2) - 1
+
+				mA = (value + 1) * 2";
+			} DRIVE[6:8];
+
+		} IO @ 0x4;
+
+		reg {
+			name = "Interrupt Config";
+
+			field {
+				desc = "Enable
+
+				Enables the summary irq delivery to the cpu when the latched status bit is set in the interrupt status register.
+				";
+				sw = rw; hw = r;
+			} ENABLE[0:0];
+
+			field {
+				desc = "Polarity
+
+				Indicates the detection polarity.
+
+				Low = 0
+				High = 1
+				";
+				sw = rw; hw = r;
+			} POLARITY[1:1];
+
+			field {
+				desc = "Detection
+
+				If the width of this field is 2:
+
+					Level low = 0       Polarity Low
+					Level high = 0      Polarity High
+					Edge rising = 1     Polarity High
+					Edge falling = 2    Polarity High
+					Edge both = 3       Polarity High
+
+				Else if the width of this field is 1:
+
+					Level low = 0       Polarity Low
+					Level high = 0      Polarity High
+					Edge rising = 1     Polarity High
+					Edge falling = 1    Polarity Low
+					Edge both = 1       Polarity High
+				";
+				sw = rw; hw = r;
+			} DETECTION[2:3];
+
+			field {
+				desc = "Raw Status Enable
+
+				Causes a sensed level/edge on the line to be latched to the interrupt status register.
+
+				This bit should be cleared when masking a level triggered irq to prevent it from being latched while masked.
+
+				When unmasking set this bit.
+
+				When changing the irq type set this bit and if it was not enabled to begin with acknowledge a possible irq
+				by writing to the status register after writing the new configuration.
+				";
+				sw = rw; hw = r;
+			} RAW_STATUS[4:4];
+
+			field {
+				desc = "Target
+
+				Write the chip-specific target kpss value to route the irq to the cpu.
+				";
+				sw = rw; hw = r;
+			} TARGET[5:7];
+
+		} INTR_CFG @ 0x8;
+
+		reg {
+			name = "Interrupt Status";
+
+			field {
+				desc = "Status/Acknowledge
+
+				Read return the latched interrupt status.
+
+				Write acknowledges the interrupt.
+				";
+				sw = rw; hw = rw;
+			} STATUS[0:0];
+
+		} INTR_STATUS @ 0xC;
+	};
+
+	PIN_GROUP pin_groups[183] @ 0x0 += 0x1000;
+};
